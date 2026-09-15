@@ -348,6 +348,18 @@ class KGBuilder:
                   f"(CPU: {cpu:.1f}%, ERR: {err:.4f}, MEM: {mem:.1f}MB)")
         return anomaly
 
+    def create_triggers_edge(self, source, target, fault_type="propagation"):
+        """Creates a directed TRIGGERS edge representing fault propagation from source to target."""
+        self.graph.query("""
+            MATCH (a {name: $source})
+            MATCH (b {name: $target})
+            MERGE (a)-[r:TRIGGERS]->(b)
+            SET r.fault_type = $fault_type,
+                r.propagation_time = $ts,
+                r.confidence = 0.90
+        """, params={"source": source, "target": target, "fault_type": fault_type, "ts": datetime.utcnow().isoformat()})
+        print(f"  🔗 PROPAGATION: ({source}) -[:TRIGGERS]-> ({target})")
+
     def poll_and_propagate(self, grace=False):
         print(f"[{datetime.utcnow().strftime('%H:%M:%S')}] Polling {len(SERVICES_METADATA)} services"
               + (" (grace period — no anomaly detection)" if grace else "") + "...")
