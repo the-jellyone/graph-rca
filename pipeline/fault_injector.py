@@ -131,12 +131,31 @@ def _log_fault(fault, injection_time):
     return entry["episode_id"]
 
 
+def _c(service_name):
+    """Find the exact running or existing container name for a service."""
+    try:
+        cmd = ["docker", "ps", "-a", "--format", "{{.Names}}"]
+        res = subprocess.run(cmd, capture_output=True, text=True, timeout=2)
+        if res.returncode == 0:
+            for name in res.stdout.strip().splitlines():
+                if f"-{service_name}-" in name or name.endswith(f"-{service_name}") or name.endswith(f"-{service_name}-1"):
+                    return name
+    except Exception:
+        pass
+    return f"graph-rca-{service_name}-1"
+
 def inject(fault_id):
     fault = FAULTS[fault_id]
     t = datetime.now(timezone.utc).isoformat()
     print(f"\n  injecting › {fault['description']}...")
     try:
-        subprocess.run(fault["inject"], shell=True, check=True,
+        # Resolve target containers dynamically
+        cmd = fault["inject"]
+        for svc in ["catalogue-db", "payment", "orders", "carts", "orders-db", "user", "shipping"]:
+            actual = _c(svc)
+            cmd = cmd.replace(f"rca-project-{svc}-1", actual).replace(f"graph-rca-{svc}-1", actual)
+
+        subprocess.run(cmd, shell=True, check=True,
                        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         ep = _log_fault(fault, t)
         print(f"  done › episode #{ep} logged  |  monitor will detect in ≤30s")
@@ -148,7 +167,12 @@ def recover(fault_id):
     fault = FAULTS[fault_id]
     print(f"\n  recovering › {fault['target']}...")
     try:
-        subprocess.run(fault["recover"], shell=True, check=True,
+        cmd = fault["recover"]
+        for svc in ["catalogue-db", "payment", "orders", "carts", "orders-db", "user", "shipping"]:
+            actual = _c(svc)
+            cmd = cmd.replace(f"rca-project-{svc}-1", actual).replace(f"graph-rca-{svc}-1", actual)
+
+        subprocess.run(cmd, shell=True, check=True,
                        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         print(f"  done › {fault['target']} restarted")
     except Exception as e:
