@@ -28,6 +28,9 @@ LOKI_URL   = "http://localhost:3100"
 MAX_HOPS   = 5
 
 
+import logging
+logging.getLogger("neo4j").setLevel(logging.ERROR)
+
 def _make_graph():
     """Returns a Neo4j query-capable object (LangChain or native fallback)."""
     if Neo4jGraph is not None:
@@ -41,11 +44,19 @@ def _make_graph():
             )
         except Exception:
             pass
-    # Pure native driver fallback — identical .query() interface
-    from neo4j import GraphDatabase
+    # Pure native driver fallback — identical .query() interface with notifications disabled
+    from neo4j import GraphDatabase, NotificationMinimumSeverity
     class _Native:
         def __init__(self):
-            self._d = GraphDatabase.driver(NEO4J_URI, auth=(NEO4J_USER, NEO4J_PASS))
+            try:
+                self._d = GraphDatabase.driver(
+                    NEO4J_URI,
+                    auth=(NEO4J_USER, NEO4J_PASS),
+                    notifications_min_severity=NotificationMinimumSeverity.OFF
+                )
+            except Exception:
+                self._d = GraphDatabase.driver(NEO4J_URI, auth=(NEO4J_USER, NEO4J_PASS))
+
         def query(self, q, params=None):
             with self._d.session() as s:
                 return [dict(r) for r in s.run(q, params or {})]

@@ -11,7 +11,9 @@ import textwrap
 from pathlib import Path
 from datetime import datetime, timezone
 
+import logging
 warnings.filterwarnings("ignore")
+logging.getLogger("neo4j").setLevel(logging.ERROR)
 
 try:
     from dotenv import load_dotenv
