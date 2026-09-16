@@ -80,58 +80,55 @@ def _call(bundle, system_msg, history, user_msg):
         return r.choices[0].message.content.strip()
 
 
-# ─── Context builder ──────────────────────────────────────────────────────────
+# ─── Context builder (Lean & Focused) ──────────────────────────────────────────
 
-def _make_system_msg(ctx, healthy_mode=False):
+def _make_system_msg(ctx, healthy_mode=False, resolved=False):
+    if resolved:
+        return (
+            "You are a concise RCA assistant for the Sock Shop microservices system.\n"
+            "STATUS: RESOLVED. All services have recovered and are operating normally.\n"
+            "If the user asks about the previous incident, confirm that the fault was repaired and the system is healthy.\n"
+            "Keep answers short and conversational (1-3 sentences)."
+        )
+
     if healthy_mode:
         services = ctx.get("all_services", [])
-        svc_block = "\n".join(
-            f"  {s['name']} — {s.get('role','?')} — {s.get('status','?')}"
-            for s in services
-        )
+        names = ", ".join(s["name"] for s in services) if services else "all services"
         return (
-            "You are a concise RCA assistant for a cloud-native microservices system (Sock Shop).\n"
-            "All services are currently healthy. Answer questions about system topology, "
-            "dependencies, and architecture from the context below.\n"
-            "Keep answers short and conversational. Use markdown for structure when helpful.\n\n"
-            f"[SERVICES]\n{svc_block}"
+            "You are a concise RCA assistant for the Sock Shop microservices system.\n"
+            f"STATUS: HEALTHY. All 13 services are healthy ({names}).\n"
+            "Answer questions about system architecture, dependencies, and health from this context.\n"
+            "Keep answers short and conversational (1-3 sentences)."
         )
 
     inc   = ctx["incident"]
     anoms = ctx["anomalous_nodes"]
-    hlth  = ctx["healthy_perimeter"]
     logs  = ctx["logs"]
     trav  = ctx["traversal"]
 
-    anom_block = ""
-    for n in anoms:
-        anom_block += (
-            f"  {n['name']} | type: {n.get('anomaly_type')} "
-            f"| since: {n.get('anomaly_since')} "
-            f"| cpu: {n.get('cpu_usage')}% mem: {n.get('memory_usage')}MB\n"
-        )
-    hlth_block = ", ".join(h["name"] for h in hlth) or "none"
-    hop_block  = ""
-    for h in trav["hop_trace"]:
-        hop_block += f"  hop {h['hop']}: from {h['from']} → found: {h['new_anomalies_found'] or 'none'}\n"
-    log_block = ""
+    root  = inc['candidate_root_cause']
+    atype = inc['anomaly_type']
+
+    # Compact propagation summary
+    chain = " → ".join(trav.get("propagation_chain", []))
+    if not chain and anoms:
+        chain = f"{root} (isolated)"
+
+    # Only smoking gun logs (top 2 lines max per anomalous service)
+    log_lines = []
     for svc, lines in logs.items():
-        log_block += f"  [{svc}]: {lines[0][:120] if lines else 'no logs'}\n"
+        if lines:
+            log_lines.append(f"{svc}: {lines[0][:140]}")
+    log_summary = "\n  ".join(log_lines) if log_lines else "no error logs found"
 
     return (
-        "You are a concise Root Cause Analysis assistant for a cloud-native microservices system.\n"
-        "Answer ONLY from the context below. Keep answers short and conversational.\n"
-        "Use markdown for structure (bold key terms, headings for sections if needed).\n\n"
-        f"[INCIDENT]\n"
-        f"  alerted: {inc['alerted_service']}\n"
-        f"  root cause candidate: {inc['candidate_root_cause']}\n"
-        f"  anomaly type: {inc['anomaly_type']}\n"
-        f"  hops traversed: {inc['hops_traversed']}\n"
-        f"  stopped at healthy boundary: {inc['stopped_at_healthy_boundary']}\n\n"
-        f"[ANOMALOUS NODES]\n{anom_block}\n"
-        f"[HEALTHY PERIMETER]\n  {hlth_block}\n\n"
-        f"[TRAVERSAL]\n{hop_block}\n"
-        f"[LOGS]\n{log_block}"
+        "You are a concise Root Cause Analysis assistant for the Sock Shop microservices system.\n"
+        "Answer ONLY from the incident evidence below. Keep answers short, direct, and conversational (under 3 sentences).\n\n"
+        f"[INCIDENT EVIDENCE]\n"
+        f"• Root Cause: {root} ({atype})\n"
+        f"• Traversal Path: {chain}\n"
+        f"• Hops: {inc['hops_traversed']}\n"
+        f"• Evidence Logs:\n  {log_summary}\n"
     )
 
 
@@ -140,16 +137,18 @@ def _make_system_msg(ctx, healthy_mode=False):
 def _agent_print(text):
     """Render Agent reply with markdown support."""
     console.print()
-    # Print each line prefixed properly, rendering markdown
     md = Markdown(text)
-    # Print "Agent:" label then the markdown block indented
     console.print("[bold]Agent:[/bold]", end=" ")
     console.print(md)
     console.print()
 
 
 def _alert_print(services):
-    console.print(f"\n[bold yellow]⚠  alert:[/bold yellow] {', '.join(services)} — context updated\n")
+    console.print(f"\n[bold yellow]⚠  ALERT:[/bold yellow] Incident detected on [bold]{', '.join(services)}[/bold] — context updated\n")
+
+
+def _resolved_print():
+    console.print(f"\n[bold green]✅  RESOLVED:[/bold green] System recovered — all services healthy. Context updated\n")
 
 
 def _header(status_line):
@@ -163,22 +162,28 @@ def _header(status_line):
 # ─── Watcher thread ───────────────────────────────────────────────────────────
 
 class _Watcher(threading.Thread):
-    def __init__(self, graph, known, on_alert):
+    def __init__(self, graph, known, on_alert, on_resolved):
         super().__init__(daemon=True)
-        self.graph    = graph
-        self.known    = set(known)
-        self.on_alert = on_alert
-        self._stop    = threading.Event()
+        self.graph       = graph
+        self.known       = set(known)
+        self.on_alert    = on_alert
+        self.on_resolved = on_resolved
+        self._stop       = threading.Event()
 
     def run(self):
-        while not self._stop.wait(15):
+        while not self._stop.wait(10):
             try:
                 rows = get_active_anomalies(self.graph)
                 now  = {r["name"] for r in rows}
                 new  = now - self.known
+
                 if new:
                     self.known = now
                     self.on_alert(new, rows)
+                elif not now and self.known:
+                    # Anomaly was cleared!
+                    self.known = set()
+                    self.on_resolved()
             except Exception:
                 pass
 
@@ -242,8 +247,12 @@ def run():
         sys_msg_holder[0] = _make_system_msg(new_ctx)
         _alert_print(new_services)
 
+    def _on_resolved():
+        sys_msg_holder[0] = _make_system_msg({}, resolved=True)
+        _resolved_print()
+
     known = {a["name"] for a in anomalies}
-    watcher = _Watcher(graph, known, _on_new_alert)
+    watcher = _Watcher(graph, known, _on_new_alert, _on_resolved)
     watcher.start()
 
     _header("online")
