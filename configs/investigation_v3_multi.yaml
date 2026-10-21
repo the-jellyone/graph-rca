@@ -1,0 +1,370 @@
+schema_version: 3
+task_id: sockshop_multicause_v3
+resources:
+- front-end
+- catalogue
+- catalogue-db
+- orders
+- payment
+- carts
+- carts-db
+- orders-db
+- user
+- shipping
+diagnoses:
+- []
+- - edge/orders/payment
+- - resource/carts
+- - resource/catalogue-db
+- - resource/orders
+- - resource/orders-db
+- - resource/payment
+- - resource/shipping
+- - resource/user
+- - resource/catalogue-db
+  - resource/payment
+entry_protocol: manual_frontend
+episode:
+  observation_window_seconds: 120
+  budget: 10
+  max_probes: 5
+objective:
+  lambda_cost: 0.05
+  correct: 1.0
+  incorrect: 0.0
+  defer: 0.25
+model:
+  prior: balanced_hypotheses
+  smoothing: 0.1
+planner:
+  depth: 2
+  max_expanded_states: 50000
+training:
+  algorithm: expected_sarsa
+  episodes: 10000
+  alpha: 0.1
+  gamma: 1.0
+  epsilon_start: 0.2
+  epsilon_end: 0.05
+  epsilon_decay_episodes: 8000
+  validation_interval: 500
+  seeds:
+  - 11
+  - 22
+  - 33
+  - 44
+  - 55
+actions:
+- schema_version: 2
+  action_id: cpu/payment/v2
+  template: cpu
+  resource_id: payment
+  parameters_json: '{"window_seconds":120}'
+  credits: 2
+  required_capabilities:
+  - cpu
+  response_vocabulary:
+  - NORMAL
+  - HIGH
+  - UNAVAILABLE
+  encoding_hash: '0000000000000000000000000000000000000000000000000000000000000000'
+- action_id: latency/auth/front-end/v3
+  resource_id: front-end
+  template: latency
+  schema_version: 3
+  parameters_json: '{"min_samples":20,"operation":"auth","window_seconds":120}'
+  credits: 2
+  required_capabilities:
+  - latency/auth
+  response_vocabulary:
+  - NORMAL
+  - SLOW
+  - UNAVAILABLE
+  encoding_hash: '0000000000000000000000000000000000000000000000000000000000000000'
+- schema_version: 2
+  action_id: latency/front-end/v2
+  template: latency
+  resource_id: front-end
+  parameters_json: '{"min_samples":20,"operation":"checkout","window_seconds":120}'
+  credits: 2
+  required_capabilities:
+  - latency
+  response_vocabulary:
+  - NORMAL
+  - SLOW
+  - UNAVAILABLE
+  encoding_hash: '0000000000000000000000000000000000000000000000000000000000000000'
+- action_id: latency/shipping_health/shipping/v3
+  resource_id: shipping
+  template: latency
+  schema_version: 3
+  parameters_json: '{"min_samples":20,"operation":"shipping_health","window_seconds":120}'
+  credits: 2
+  required_capabilities:
+  - latency/shipping_health
+  response_vocabulary:
+  - NORMAL
+  - SLOW
+  - UNAVAILABLE
+  encoding_hash: '0000000000000000000000000000000000000000000000000000000000000000'
+- schema_version: 2
+  action_id: logs/carts/v2
+  template: logs
+  resource_id: carts
+  parameters_json: '{"max_bytes":8192,"max_lines":20,"window_seconds":120}'
+  credits: 2
+  required_capabilities:
+  - logs
+  response_vocabulary:
+  - NO_RELEVANT_ERROR
+  - DEPENDENCY_ERROR
+  - RESOURCE_ERROR
+  - OTHER_ERROR
+  - UNAVAILABLE
+  - DEPENDENCY_ERROR/carts-db
+  encoding_hash: '0000000000000000000000000000000000000000000000000000000000000000'
+- schema_version: 2
+  action_id: logs/orders/v2
+  template: logs
+  resource_id: orders
+  parameters_json: '{"max_bytes":8192,"max_lines":20,"window_seconds":120}'
+  credits: 2
+  required_capabilities:
+  - logs
+  response_vocabulary:
+  - NO_RELEVANT_ERROR
+  - DEPENDENCY_ERROR
+  - RESOURCE_ERROR
+  - OTHER_ERROR
+  - UNAVAILABLE
+  - DEPENDENCY_ERROR/orders-db
+  - DEPENDENCY_ERROR/payment
+  - DEPENDENCY_ERROR/shipping
+  encoding_hash: '0000000000000000000000000000000000000000000000000000000000000000'
+- schema_version: 2
+  action_id: logs/payment/v2
+  template: logs
+  resource_id: payment
+  parameters_json: '{"max_bytes":8192,"max_lines":20,"window_seconds":120}'
+  credits: 2
+  required_capabilities:
+  - logs
+  response_vocabulary:
+  - NO_RELEVANT_ERROR
+  - DEPENDENCY_ERROR
+  - RESOURCE_ERROR
+  - OTHER_ERROR
+  - UNAVAILABLE
+  encoding_hash: '0000000000000000000000000000000000000000000000000000000000000000'
+- schema_version: 2
+  action_id: memory/carts/v2
+  template: memory
+  resource_id: carts
+  parameters_json: '{"window_seconds":120}'
+  credits: 2
+  required_capabilities:
+  - memory
+  response_vocabulary:
+  - NORMAL
+  - PRESSURE
+  - GROWTH
+  - PRESSURE_AND_GROWTH
+  - UNAVAILABLE
+  encoding_hash: '0000000000000000000000000000000000000000000000000000000000000000'
+- action_id: request_errors/auth/front-end/v3
+  resource_id: front-end
+  template: request_errors
+  schema_version: 3
+  parameters_json: '{"min_samples":20,"operation":"auth","window_seconds":120}'
+  credits: 2
+  required_capabilities:
+  - request_errors/auth
+  response_vocabulary:
+  - NORMAL
+  - HIGH_HTTP_ERRORS
+  - HIGH_TRANSPORT_FAILURES
+  - MIXED_FAILURES
+  - AUTH_REFUSED
+  - HIGH_APPLICATION_FAILURES
+  - UNAVAILABLE
+  encoding_hash: '0000000000000000000000000000000000000000000000000000000000000000'
+- schema_version: 2
+  action_id: request_errors/front-end/v2
+  template: request_errors
+  resource_id: front-end
+  parameters_json: '{"min_samples":20,"operation":"checkout","window_seconds":120}'
+  credits: 2
+  required_capabilities:
+  - request_errors
+  response_vocabulary:
+  - NORMAL
+  - HIGH_HTTP_ERRORS
+  - HIGH_TRANSPORT_FAILURES
+  - MIXED_FAILURES
+  - UNAVAILABLE
+  encoding_hash: '0000000000000000000000000000000000000000000000000000000000000000'
+- action_id: request_errors/shipping_health/shipping/v3
+  resource_id: shipping
+  template: request_errors
+  schema_version: 3
+  parameters_json: '{"min_samples":20,"operation":"shipping_health","window_seconds":120}'
+  credits: 2
+  required_capabilities:
+  - request_errors/shipping_health
+  response_vocabulary:
+  - NORMAL
+  - HIGH_HTTP_ERRORS
+  - HIGH_TRANSPORT_FAILURES
+  - MIXED_FAILURES
+  - AUTH_REFUSED
+  - HIGH_APPLICATION_FAILURES
+  - UNAVAILABLE
+  encoding_hash: '0000000000000000000000000000000000000000000000000000000000000000'
+- schema_version: 2
+  action_id: status/carts-db/v2
+  template: status
+  resource_id: carts-db
+  parameters_json: '{}'
+  credits: 1
+  required_capabilities:
+  - status
+  response_vocabulary:
+  - RUNNING
+  - STOPPED
+  - OTHER_STATE
+  - UNAVAILABLE
+  encoding_hash: '0000000000000000000000000000000000000000000000000000000000000000'
+- schema_version: 2
+  action_id: status/carts/v2
+  template: status
+  resource_id: carts
+  parameters_json: '{}'
+  credits: 1
+  required_capabilities:
+  - status
+  response_vocabulary:
+  - RUNNING
+  - STOPPED
+  - OTHER_STATE
+  - UNAVAILABLE
+  encoding_hash: '0000000000000000000000000000000000000000000000000000000000000000'
+- schema_version: 2
+  action_id: status/catalogue-db/v2
+  template: status
+  resource_id: catalogue-db
+  parameters_json: '{}'
+  credits: 1
+  required_capabilities:
+  - status
+  response_vocabulary:
+  - RUNNING
+  - STOPPED
+  - OTHER_STATE
+  - UNAVAILABLE
+  encoding_hash: '0000000000000000000000000000000000000000000000000000000000000000'
+- schema_version: 2
+  action_id: status/catalogue/v2
+  template: status
+  resource_id: catalogue
+  parameters_json: '{}'
+  credits: 1
+  required_capabilities:
+  - status
+  response_vocabulary:
+  - RUNNING
+  - STOPPED
+  - OTHER_STATE
+  - UNAVAILABLE
+  encoding_hash: '0000000000000000000000000000000000000000000000000000000000000000'
+- schema_version: 2
+  action_id: status/front-end/v2
+  template: status
+  resource_id: front-end
+  parameters_json: '{}'
+  credits: 1
+  required_capabilities:
+  - status
+  response_vocabulary:
+  - RUNNING
+  - STOPPED
+  - OTHER_STATE
+  - UNAVAILABLE
+  encoding_hash: '0000000000000000000000000000000000000000000000000000000000000000'
+- schema_version: 2
+  action_id: status/orders-db/v2
+  template: status
+  resource_id: orders-db
+  parameters_json: '{}'
+  credits: 1
+  required_capabilities:
+  - status
+  response_vocabulary:
+  - RUNNING
+  - STOPPED
+  - OTHER_STATE
+  - UNAVAILABLE
+  encoding_hash: '0000000000000000000000000000000000000000000000000000000000000000'
+- schema_version: 2
+  action_id: status/orders/v2
+  template: status
+  resource_id: orders
+  parameters_json: '{}'
+  credits: 1
+  required_capabilities:
+  - status
+  response_vocabulary:
+  - RUNNING
+  - STOPPED
+  - OTHER_STATE
+  - UNAVAILABLE
+  encoding_hash: '0000000000000000000000000000000000000000000000000000000000000000'
+- schema_version: 2
+  action_id: status/payment/v2
+  template: status
+  resource_id: payment
+  parameters_json: '{}'
+  credits: 1
+  required_capabilities:
+  - status
+  response_vocabulary:
+  - RUNNING
+  - STOPPED
+  - OTHER_STATE
+  - UNAVAILABLE
+  encoding_hash: '0000000000000000000000000000000000000000000000000000000000000000'
+- schema_version: 2
+  action_id: status/shipping/v2
+  template: status
+  resource_id: shipping
+  parameters_json: '{}'
+  credits: 1
+  required_capabilities:
+  - status
+  response_vocabulary:
+  - RUNNING
+  - STOPPED
+  - OTHER_STATE
+  - UNAVAILABLE
+  encoding_hash: '0000000000000000000000000000000000000000000000000000000000000000'
+- schema_version: 2
+  action_id: status/user/v2
+  template: status
+  resource_id: user
+  parameters_json: '{}'
+  credits: 1
+  required_capabilities:
+  - status
+  response_vocabulary:
+  - RUNNING
+  - STOPPED
+  - OTHER_STATE
+  - UNAVAILABLE
+  encoding_hash: '0000000000000000000000000000000000000000000000000000000000000000'
+encoding_hash: '0000000000000000000000000000000000000000000000000000000000000000'
+paths:
+  dataset: datasets/adaptive_v3_multi
+  raw_dataset: datasets/raw_v3
+  encoder: experiments/v3/multi/encoder.json
+  model: runs/adaptive_v3_multi/model.json
+  runs: runs/adaptive_v3_multi
+  resource_registry: configs/resources_sockshop_v3.yaml

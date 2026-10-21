@@ -1,0 +1,12 @@
+{
+  "base_commit": "5b4f9652bfb472cf85ac8f498fdd5871f24d6021",
+  "reference_commit": "c7567d694db58bef3351d57e33d337e7f9830d6b",
+  "reference_branch": "codex/live-agent-demo",
+  "patch": "live-v2-adapter-reference.patch",
+  "sha256": "733101595ffb9c5ca76314ba795b2b81038d54d59f9753d1b13242770f7deca2",
+  "bytes": 240969,
+  "scope": "Existing v2 rolling GraphRAG and controlled repair adapter; no v3 or DQN support claimed",
+  "patch_applied_to_dqn": false,
+  "gcp_rehearsed": false,
+  "git_apply_check_against_declared_base": "passed, using isolated alternate index without checkout changes"
+}

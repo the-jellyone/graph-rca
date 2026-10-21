@@ -1,0 +1,58 @@
+{
+  "purpose": "Exact transfer inventory for validation-selected DQN artifacts, not a portable executable live adapter",
+  "selected_dqn": "dqn-11",
+  "selected_overall": "dp",
+  "runtime_hash": "a07e01a0551bf89f6d57d26c5b3ec996684871f41c37ef725d876e0f5d9f97cc",
+  "files": {
+    "experiments/v3/multi/encoder.json": {
+      "sha256": "73035576be5b62f0468769e272f9036a7d51b36b337af0cb75fa7a413c79d485",
+      "bytes": 10677
+    },
+    "runs/adaptive_v3_multi/model.json": {
+      "sha256": "23977030bab4fd98a048ae0af57a17edc8a7ead5159d58a1601f6cbcf4022ace",
+      "bytes": 92241
+    },
+    "runs/adaptive_v3_multi/training/dqn/11/best.pt": {
+      "sha256": "c41a4e65a3d11d0887c80fbedb709d540fc8745a732c18bf9c3a9d37faf19314",
+      "bytes": 79957958
+    },
+    "configs/investigation_v3_multi.yaml": {
+      "sha256": "8559ae1605e2f0baeccd2fad41837c774eb70e4694513c343f33001ae7c870e0",
+      "bytes": 9641
+    },
+    "configs/resources_sockshop_v3.yaml": {
+      "sha256": "1544ca3415f8b13130d3aca7c38597488b6eb0d17946239d1af3eeb881589af4",
+      "bytes": 17012
+    },
+    "src/rca_investigation/state_vector.py": {
+      "sha256": "bdeec02d1971ae639f6172898f2371d28b91320da1f9c5d2570a1ec064f6e752",
+      "bytes": 4752
+    },
+    "src/rca_investigation/topology.py": {
+      "sha256": "3a5ca725286e9283d5cb57fdccc736326b043c13bf1c0d9c47a10b18320eefb3",
+      "bytes": 234
+    },
+    "experiments/v3/neural/uv.lock": {
+      "sha256": "89d79fea9dcad23a3561eaee96af0eb454c080258e93fda72eb93938aa089140",
+      "bytes": 44025
+    },
+    "uv.lock": {
+      "sha256": "f942eb660c35c191ede49e733184d60c2caa0930afd4c2eb5263a9b88c0d6273",
+      "bytes": 229210
+    },
+    "experiments/v3/final-runtime-source.json": {
+      "sha256": "2df2ebb0fc244205ae462438ad06bbfdb5523d31dfcf982a1d1a85856c02d5ad",
+      "bytes": 475148
+    },
+    "runs/adaptive_v3_multi/final.json": {
+      "sha256": "6b1b1b097a2925e44e275e5a5b6d6e1cb4d5457efdbe4405ddf39addf6881877",
+      "bytes": 10889
+    }
+  },
+  "instructions": [
+    "Transfer unmodified bytes through your team-approved channel; do not copy Windows virtual environments.",
+    "Treat the resource registry as laptop training provenance, never as a VM mutation target registry.",
+    "Do not alter the sealed final.json to bypass host/environment validation.",
+    "A VM inference relocation adapter and live collector/repair integration still require implementation and rehearsal."
+  ]
+}

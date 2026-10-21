@@ -1,0 +1,400 @@
+{
+  "protocol": "live_v3_window120_r1",
+  "all_cases_completed": true,
+  "physical_primary": "dqn",
+  "fresh_physical_cases": 11,
+  "shadow_policy_evaluations": 99,
+  "bundle_hash": "a6eed9ed12bb663a9d7da86242bd8982f33651d9af47e5de00968ce1e1f8056e",
+  "cases": [
+    {
+      "case": "carts_memory",
+      "diagnosis": {
+        "cause_ids": [
+          "resource/carts"
+        ],
+        "confidence": 0.9850273514665167,
+        "decision_type": "DIAGNOSE",
+        "evidence_ids": [
+          "f1e5d42822763dc3d9e57e21bb6f1f8915406f961b7f49febde74d8d551c49fa",
+          "3afbf4b7ff677e742db7caa782d3de0ee36464243dd3c0b461eb1da02ee30adc",
+          "22edf04244c8d712e2019ae980628e4d39d93f830d9c51355c2fe0e95dd7ce33",
+          "c5d2c71a0d5c713ab3a596ed05a796392acd67bf7b3884eb03de2c3fb3d75d5e",
+          "006d048aba8cb2c4a752b1faedea97c4e0e62bd967e7eca83bba213518493098"
+        ],
+        "model_hash": "202a75e9260265861e249ee6cef6435056aa3ca09aab2f840adcee0e9d5ec24c",
+        "policy_hash": "fd15c20e76fcdae0e2dbcb0147b06c47af739367f814eaf6a041bf8671d0fd48",
+        "schema_version": 3,
+        "stop_reason": "horizon"
+      },
+      "diagnosis_correct": true,
+      "agent_repair": true,
+      "cleanup_confirmed": true,
+      "diagnosis_seconds": 161.56299999999464,
+      "verified_recovery_seconds": 170.06299999999464,
+      "adapter_hash": "52355244c977830b116e46e6ee0f6df703d44e6296a838edfd112b0c014b48ee",
+      "receipt_sha256": "9b07ca9fc036d262c4122818550f05df4fcc565d37f2bbe33ad54afc2ecf4b7e"
+    },
+    {
+      "case": "catalogue_db_payment_cpu",
+      "diagnosis": {
+        "cause_ids": [
+          "resource/catalogue-db",
+          "resource/payment"
+        ],
+        "confidence": 0.9919160512405254,
+        "decision_type": "DIAGNOSE",
+        "evidence_ids": [
+          "bbfc98b2955ae06612c1f8c23a511d5f75f8b04533fba646848d708cda680bd4",
+          "00f8d5c5526302a59e0c875ee62759ff6d6a38c2fdaa3ab7086ecb3ac01b7fa4",
+          "bda0ff0376d336cf4393188ebcbab348d3d50d92a0b49f294430ab1e338e331d",
+          "81d9ca76f9a24aa883276d00cb876cef9647f8ddc9a249806e72dc029e7a2bcd",
+          "1a9dee89fa551def13fde479dee5a1ecec07bb25fc0dd2b82dc8d1850dcef6a9"
+        ],
+        "model_hash": "202a75e9260265861e249ee6cef6435056aa3ca09aab2f840adcee0e9d5ec24c",
+        "policy_hash": "fd15c20e76fcdae0e2dbcb0147b06c47af739367f814eaf6a041bf8671d0fd48",
+        "schema_version": 3,
+        "stop_reason": "horizon"
+      },
+      "diagnosis_correct": true,
+      "agent_repair": true,
+      "cleanup_confirmed": true,
+      "diagnosis_seconds": 161.1710000000021,
+      "verified_recovery_seconds": 168.10899999999674,
+      "adapter_hash": "52355244c977830b116e46e6ee0f6df703d44e6296a838edfd112b0c014b48ee",
+      "receipt_sha256": "6411a8e2c501ee0056dab8d85fd14bbafc5d46c5031ab015f0fa62e678fdacd3"
+    },
+    {
+      "case": "catalogue_db_stop",
+      "diagnosis": {
+        "cause_ids": [
+          "resource/catalogue-db"
+        ],
+        "confidence": 0.9638453446419206,
+        "decision_type": "DIAGNOSE",
+        "evidence_ids": [
+          "d08b046ba4b0f221e487046566469eec3e8ae437fc7881de1df3485224349cb6",
+          "1224c7d73b9efc54dc97cecd53bb7cbcea7e745e86cd419912a111256c2ba691",
+          "af87ddc042726cece6ac31c68cfffb33b42eca24f11b1a2f2a4f09f3b71d783f",
+          "5d0cb3472fe981f814f104c7355a3256085bd88592a9b91c9098eb80bf7c5803"
+        ],
+        "model_hash": "202a75e9260265861e249ee6cef6435056aa3ca09aab2f840adcee0e9d5ec24c",
+        "policy_hash": "fd15c20e76fcdae0e2dbcb0147b06c47af739367f814eaf6a041bf8671d0fd48",
+        "schema_version": 3,
+        "stop_reason": "voluntary"
+      },
+      "diagnosis_correct": true,
+      "agent_repair": true,
+      "cleanup_confirmed": true,
+      "diagnosis_seconds": 161.8279999999795,
+      "verified_recovery_seconds": 166.79699999999139,
+      "adapter_hash": "52355244c977830b116e46e6ee0f6df703d44e6296a838edfd112b0c014b48ee",
+      "receipt_sha256": "549d6d71fdbcfb5e53b5246cb7299dd4c11f60ef0b00f5beea44e07e92df6691"
+    },
+    {
+      "case": "healthy",
+      "diagnosis": {
+        "cause_ids": [],
+        "confidence": 0.8902215448416445,
+        "decision_type": "DIAGNOSE",
+        "evidence_ids": [
+          "995bbbd6726bb8402716060786ffdada1793b5da0b4a5b9d5907b26ba9fff702",
+          "c20975aac3433a3e1119222b1f4a84a32a0b26c577fda955444b3517ee9f0508",
+          "71e032a94116e15ddca14aec4669c6267f1e49ff0ea9767e8e81d72bd71627d8",
+          "0169302d02128908029b7510181050130c887ed96cd202edf4097fdaef909e10",
+          "78187d1260278f19fa39abf75b582248f76293fbce4946c62a720941f75390fb"
+        ],
+        "model_hash": "202a75e9260265861e249ee6cef6435056aa3ca09aab2f840adcee0e9d5ec24c",
+        "policy_hash": "fd15c20e76fcdae0e2dbcb0147b06c47af739367f814eaf6a041bf8671d0fd48",
+        "schema_version": 3,
+        "stop_reason": "horizon"
+      },
+      "diagnosis_correct": true,
+      "agent_repair": false,
+      "cleanup_confirmed": true,
+      "diagnosis_seconds": 166.76600000000326,
+      "verified_recovery_seconds": 171.45300000000861,
+      "adapter_hash": "52355244c977830b116e46e6ee0f6df703d44e6296a838edfd112b0c014b48ee",
+      "receipt_sha256": "29443f7dcbefd35d671400b5e5d36def2e21b9c1b74c6484cac198b3c13c0ae6"
+    },
+    {
+      "case": "orders_db_stop",
+      "diagnosis": {
+        "cause_ids": [
+          "resource/orders-db"
+        ],
+        "confidence": 0.9912683884971286,
+        "decision_type": "DIAGNOSE",
+        "evidence_ids": [
+          "de05b48044e2917c11bd210f4904dc484750ea136abd4b8d88b85c94cbca7390",
+          "f4ab8a82b8c3a5f31946326b2f3aef8eb0ea99017cde7e1638304909702fb599",
+          "7894eacc13f5e33d333bd487dfe853318b4b35be6e9d046b1ea59ca811f311b5",
+          "d9ce6789c60ad830e5e7a0e1b7e66d12195d2f42d0e6741e611f5f99cebbf2fa"
+        ],
+        "model_hash": "202a75e9260265861e249ee6cef6435056aa3ca09aab2f840adcee0e9d5ec24c",
+        "policy_hash": "fd15c20e76fcdae0e2dbcb0147b06c47af739367f814eaf6a041bf8671d0fd48",
+        "schema_version": 3,
+        "stop_reason": "voluntary"
+      },
+      "diagnosis_correct": true,
+      "agent_repair": false,
+      "cleanup_confirmed": true,
+      "diagnosis_seconds": 162.03200000000652,
+      "verified_recovery_seconds": 167.32800000000861,
+      "adapter_hash": "52355244c977830b116e46e6ee0f6df703d44e6296a838edfd112b0c014b48ee",
+      "receipt_sha256": "4acc947e3c1be2428359fdd2b6b130c726f32988e2aca7a903621ffb12edbb0e"
+    },
+    {
+      "case": "orders_payment_delay",
+      "diagnosis": {
+        "cause_ids": [
+          "edge/orders/payment"
+        ],
+        "confidence": 0.9276081792995962,
+        "decision_type": "DIAGNOSE",
+        "evidence_ids": [
+          "b4d0a67cffcc32b76c0c6a76b19fa006556b51cfc73bf542a5a86254215cd1d3",
+          "f8913b262503b7f0cefc050c33584bf3d6acbeb6aee198a71c5d11bb6915f2b8",
+          "bdc57f52c28f3dd2fda1d0e9a621f1d6cd715c9b7b83ed48570ba0b5ce7b2587",
+          "cbdcde0beb41fb37323d96baf7e6969c72bdb5283d0aecca4f87ea0916238960"
+        ],
+        "model_hash": "202a75e9260265861e249ee6cef6435056aa3ca09aab2f840adcee0e9d5ec24c",
+        "policy_hash": "fd15c20e76fcdae0e2dbcb0147b06c47af739367f814eaf6a041bf8671d0fd48",
+        "schema_version": 3,
+        "stop_reason": "voluntary"
+      },
+      "diagnosis_correct": true,
+      "agent_repair": true,
+      "cleanup_confirmed": true,
+      "diagnosis_seconds": 166.53100000001723,
+      "verified_recovery_seconds": 175.9220000000205,
+      "adapter_hash": "52355244c977830b116e46e6ee0f6df703d44e6296a838edfd112b0c014b48ee",
+      "receipt_sha256": "fe236339d372edcee2b124aefd8bbcf57f037576549ebe1e386e097f2bacf932"
+    },
+    {
+      "case": "orders_stop",
+      "diagnosis": {
+        "cause_ids": [
+          "resource/orders"
+        ],
+        "confidence": 0.9915360239607058,
+        "decision_type": "DIAGNOSE",
+        "evidence_ids": [
+          "432328cbaa4c1e8b62507b7f8433d8c30cfd1371519d7e6dd2d42a6498a7fd06",
+          "1f643bea73d0faad04a4e70c251a7ad7251dfe989fb9ebbe3dd2894ac83b8632",
+          "30ce83d7faba9466a13eb0a0030e3e6280d9d778d90d6b2f7c5eccb241a0ca55",
+          "5e1a19064b5c7743b9cbc733a5d86bbc5ab0a42378eba55c72eda65071d69a27",
+          "4d7d3b4b952f06528514393cfd3df81b9f683b168d7ec8ee17b3cd8e5d5e5dd2"
+        ],
+        "model_hash": "202a75e9260265861e249ee6cef6435056aa3ca09aab2f840adcee0e9d5ec24c",
+        "policy_hash": "fd15c20e76fcdae0e2dbcb0147b06c47af739367f814eaf6a041bf8671d0fd48",
+        "schema_version": 3,
+        "stop_reason": "horizon"
+      },
+      "diagnosis_correct": true,
+      "agent_repair": true,
+      "cleanup_confirmed": true,
+      "diagnosis_seconds": 162.3279999999795,
+      "verified_recovery_seconds": 198.79699999999139,
+      "adapter_hash": "52355244c977830b116e46e6ee0f6df703d44e6296a838edfd112b0c014b48ee",
+      "receipt_sha256": "e84ad05bd0e00b9bb1b83d8a0b5781c02ded70136055324dc9166051dd66b22d"
+    },
+    {
+      "case": "payment_cpu",
+      "diagnosis": {
+        "cause_ids": [
+          "resource/payment"
+        ],
+        "confidence": 0.78937058721603,
+        "decision_type": "DIAGNOSE",
+        "evidence_ids": [
+          "fb3318b96d4e7a53befc170a1d3589405a0f220345996f695c8dc6a2069e6392",
+          "f745eccb68703376a117999e555d73678a0acd35fa24601c2114f579a53630be",
+          "7d763b81f6d26558a6444b3749e94336b5934e44b6c78c21037214855f2de5b2",
+          "e3341898741fd61e35e3bad745c89dbe9a1ad13cad59a1545f8c6dd6840e5d0d",
+          "8bd4c73fc6289d999594b4c83f5b26e03992ab2e209216f25aa7680a9df06557"
+        ],
+        "model_hash": "202a75e9260265861e249ee6cef6435056aa3ca09aab2f840adcee0e9d5ec24c",
+        "policy_hash": "fd15c20e76fcdae0e2dbcb0147b06c47af739367f814eaf6a041bf8671d0fd48",
+        "schema_version": 3,
+        "stop_reason": "horizon"
+      },
+      "diagnosis_correct": true,
+      "agent_repair": false,
+      "cleanup_confirmed": true,
+      "diagnosis_seconds": 161.79699999999139,
+      "verified_recovery_seconds": 169.17199999999139,
+      "adapter_hash": "52355244c977830b116e46e6ee0f6df703d44e6296a838edfd112b0c014b48ee",
+      "receipt_sha256": "cade44cead09c9b407be74b6502eee594ec915d32694d784d0f16b0b090a7fff"
+    },
+    {
+      "case": "payment_stop",
+      "diagnosis": {
+        "cause_ids": [
+          "resource/payment"
+        ],
+        "confidence": 0.8899907892823261,
+        "decision_type": "DIAGNOSE",
+        "evidence_ids": [
+          "5155e5e6c73b305779543844c1256f81471ab39dbfd7552ebf95f53db785b6d8",
+          "2cf93b6cbf2c9d7f34220ee7f5ab6b7693ab09b74e898f58231fac44e8b3b43d",
+          "4ce444987896be1ce7de2ac60e5b5a48a2b5c491783e9efc609cd52bcc0ea786",
+          "c5e95a2637da491d8cc2e76bffd39a0333581fc2c99be89fc4bc897df1aeb6c0",
+          "60e7f64bbf6793548fde18f39c0d6369de7e9f4b8f87d60932ad90e6b4734c9b"
+        ],
+        "model_hash": "202a75e9260265861e249ee6cef6435056aa3ca09aab2f840adcee0e9d5ec24c",
+        "policy_hash": "fd15c20e76fcdae0e2dbcb0147b06c47af739367f814eaf6a041bf8671d0fd48",
+        "schema_version": 3,
+        "stop_reason": "horizon"
+      },
+      "diagnosis_correct": true,
+      "agent_repair": false,
+      "cleanup_confirmed": true,
+      "diagnosis_seconds": 163.03200000000652,
+      "verified_recovery_seconds": 170.42199999999139,
+      "adapter_hash": "52355244c977830b116e46e6ee0f6df703d44e6296a838edfd112b0c014b48ee",
+      "receipt_sha256": "917b7c580da92c5329bc203850f902a8ad39559857ec0320ab019ed49509dbdc"
+    },
+    {
+      "case": "shipping_stop",
+      "diagnosis": {
+        "cause_ids": [
+          "resource/shipping"
+        ],
+        "confidence": 0.9540517632216989,
+        "decision_type": "DIAGNOSE",
+        "evidence_ids": [
+          "cb6969497cc71f83f79e419eb4ee6f501c495f1a7256e1798f18a0c671d51739",
+          "a9e9c8f17a1378d920ca3d3aa5a669913216ccf8c356c5fb9b9c02a169c30606",
+          "e4ca232576905302024c4b4502e3668d70cec543e711839f36f9f9f6f9e08736"
+        ],
+        "model_hash": "202a75e9260265861e249ee6cef6435056aa3ca09aab2f840adcee0e9d5ec24c",
+        "policy_hash": "fd15c20e76fcdae0e2dbcb0147b06c47af739367f814eaf6a041bf8671d0fd48",
+        "schema_version": 3,
+        "stop_reason": "voluntary"
+      },
+      "diagnosis_correct": true,
+      "agent_repair": true,
+      "cleanup_confirmed": true,
+      "diagnosis_seconds": 162.89100000000326,
+      "verified_recovery_seconds": 186.67199999999139,
+      "adapter_hash": "52355244c977830b116e46e6ee0f6df703d44e6296a838edfd112b0c014b48ee",
+      "receipt_sha256": "2cc774713129b65935eb8c330c70e14862a2f9643899ed98bf4bfb2f478fa3f8"
+    },
+    {
+      "case": "user_stop",
+      "diagnosis": {
+        "cause_ids": [
+          "resource/user"
+        ],
+        "confidence": 0.9915360239607058,
+        "decision_type": "DIAGNOSE",
+        "evidence_ids": [
+          "9187ad9dfb46ee67618bc039cecae38b2613dae42c63d45f9b3db93beecf100a",
+          "9008d44018a6ea2d0c6375011814e4dc36763bfa5b236d8616770bbc444258fb",
+          "7db40890e237691c72eef2379dde417146d383c902dc23ff49f461071dace1ec",
+          "fb75623264b7fcf833760cfd4a54ce1088c243c44675e496ba2676aa87f4093d",
+          "3ca8d1e98a9d4de342263411a65182702cc558339650b276abb80f2256d2d3f2"
+        ],
+        "model_hash": "202a75e9260265861e249ee6cef6435056aa3ca09aab2f840adcee0e9d5ec24c",
+        "policy_hash": "fd15c20e76fcdae0e2dbcb0147b06c47af739367f814eaf6a041bf8671d0fd48",
+        "schema_version": 3,
+        "stop_reason": "horizon"
+      },
+      "diagnosis_correct": true,
+      "agent_repair": true,
+      "cleanup_confirmed": true,
+      "diagnosis_seconds": 164.03200000000652,
+      "verified_recovery_seconds": 168.68799999999464,
+      "adapter_hash": "52355244c977830b116e46e6ee0f6df703d44e6296a838edfd112b0c014b48ee",
+      "receipt_sha256": "4d8a5dc4017980416b0b278d9cee0ef76404c37f2e0240622aec6c725a7f14bc"
+    }
+  ],
+  "shadow_summaries": {
+    "dqn": {
+      "correct": 11,
+      "cases": 11,
+      "accuracy": 1.0,
+      "mean_credits": 7.181818181818182,
+      "mean_probes": 4.545454545454546,
+      "mean_choice_ms": 3.9147370396811447
+    },
+    "dp": {
+      "correct": 11,
+      "cases": 11,
+      "accuracy": 1.0,
+      "mean_credits": 5.363636363636363,
+      "mean_probes": 3.272727272727273,
+      "mean_choice_ms": 6843.004268089413
+    },
+    "voi": {
+      "correct": 9,
+      "cases": 11,
+      "accuracy": 0.8181818181818182,
+      "mean_credits": 4.909090909090909,
+      "mean_probes": 4.181818181818182,
+      "mean_choice_ms": 87.80356938653739
+    },
+    "expected-sarsa": {
+      "correct": 6,
+      "cases": 11,
+      "accuracy": 0.5454545454545454,
+      "mean_credits": 5.636363636363637,
+      "mean_probes": 5.0,
+      "mean_choice_ms": 3.053956365064633
+    },
+    "two-step-sarsa": {
+      "correct": 7,
+      "cases": 11,
+      "accuracy": 0.6363636363636364,
+      "mean_credits": 6.363636363636363,
+      "mean_probes": 4.454545454545454,
+      "mean_choice_ms": 3.272996077487501
+    },
+    "expected-sarsa-hybrid": {
+      "correct": 9,
+      "cases": 11,
+      "accuracy": 0.8181818181818182,
+      "mean_credits": 5.545454545454546,
+      "mean_probes": 4.0,
+      "mean_choice_ms": 1912.0051122468906
+    },
+    "two-step-sarsa-hybrid": {
+      "correct": 11,
+      "cases": 11,
+      "accuracy": 1.0,
+      "mean_credits": 5.454545454545454,
+      "mean_probes": 3.727272727272727,
+      "mean_choice_ms": 2962.8271624975846
+    },
+    "random-valid": {
+      "correct": 4,
+      "cases": 11,
+      "accuracy": 0.36363636363636365,
+      "mean_credits": 7.0,
+      "mean_probes": 5.0,
+      "mean_choice_ms": 2.231523636940189
+    },
+    "expanded-rule": {
+      "correct": 6,
+      "cases": 11,
+      "accuracy": 0.5454545454545454,
+      "mean_credits": 4.909090909090909,
+      "mean_probes": 4.7272727272727275,
+      "mean_choice_ms": 2.172800000067273
+    }
+  },
+  "training": false,
+  "reserved_reads": false,
+  "benchmark_equivalent": false,
+  "gcp_rehearsed": false,
+  "prior_failed_engineering_attempts": [
+    {
+      "case": "healthy",
+      "status": "FAILED",
+      "error_type": "AttributeError",
+      "cleanup_confirmed": true,
+      "adapter_hash": "a33d9f53e08109ea67ed174e3f53d6dc6318b676542bf6bcf19a3e3cc79997a0"
+    }
+  ],
+  "limits": "One fresh physical case per condition. Shadow comparisons use the same observed windows after recovery. Only the selected live primary can claim an actual agent repair. Incorrect, partial or low-confidence diagnoses trigger injector cleanup."
+}

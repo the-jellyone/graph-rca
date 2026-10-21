@@ -9,10 +9,11 @@ warnings.filterwarnings("ignore", category=DeprecationWarning)
 warnings.filterwarnings("ignore", category=UserWarning)
 
 from kg_builder import KGBuilder
+from graph_writer import writer_lease
 
 POLL_INTERVAL = 30
 
-def run():
+def _run():
     kg = KGBuilder()
     kg.build()
 
@@ -37,13 +38,18 @@ def run():
                     print(f"{'═'*60}\n")
                     was_anomalous = False
                 else:
-                    print("  ✅ All services healthy.")
+                    print("  No confirmed anomaly; check the monitor for missing telemetry.")
 
             time.sleep(POLL_INTERVAL)
 
     except KeyboardInterrupt:
         print("\n  Polling stopped.")
         kg.close()
+
+def run():
+    with writer_lease():
+        _run()
+
 
 if __name__ == "__main__":
     run()

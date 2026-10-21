@@ -1,0 +1,12 @@
+{
+  "timestamp": "2026-10-20T12:49:35.353097+00:00",
+  "target": "runs/adaptive_v2/fit-encoder.json",
+  "expected_sha256": "e29f1ecc6f6d01f4d85c48d385b69bb78eac7c080bdad2ab27e33e4992699e65",
+  "overwritten_v3_receipt_sha256": "0e2fd51d65cd5648f1aee4c696e54b5c243210701f7b6db194ea0a301de70d2d",
+  "restored_sha256": "e29f1ecc6f6d01f4d85c48d385b69bb78eac7c080bdad2ab27e33e4992699e65",
+  "reconstruction": "Canonical encoder success receipt from existing experiments/v2c/encoder.json, Windows newline; exact match to pre-v3 frozen SHA256.",
+  "cause": "The v3 fit-encoder command wrote its generic default status receipt at runs/adaptive_v2/fit-encoder.json. Its v3 model/encoder output was separately correct.",
+  "preserved_v3_receipt": "runs\\adaptive_v3_multi\\encoder-receipt-recovery\\overwritten-by-v3-multi-fit.json",
+  "frozen_index_modified": false,
+  "runtime_source_modified": false
+}

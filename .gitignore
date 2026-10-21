@@ -27,7 +27,11 @@ rca-project/neo4j/plugins/
 # Logs and session data
 rca-project/data/chat_sessions.json
 rca-project/data/fault_log.json
+data/chat_sessions.json
+data/fault_log.json
+rca_control_ui/data/
 *.log
+*.sqlite3
 
 # macOS
 .DS_Store
@@ -46,4 +50,14 @@ rca-project/volumes/
 # Jupyter
 .ipynb_checkpoints/
 *.ipynb
+
+# V3 runtime artifacts contain ignored model weights, deployment identities,
+# recovery journals, and local incident captures.
+runs/
+.uv-cache/
+.pytest_cache/
+.pytest-v3*/
+lab/adaptive-helper/rca-helper
+lab/adaptive-helper/rca-helper-lease
+lab/path-proxy/rca-path-proxy
 neo4j/data/

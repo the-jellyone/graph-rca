@@ -1,0 +1,568 @@
+"""Evaluate non-learning policies on the same frozen incident cases."""
+
+from __future__ import annotations
+
+import argparse
+import csv
+import concurrent.futures
+import json
+from collections import defaultdict
+from collections.abc import Callable, Iterable, Mapping, Sequence
+from dataclasses import asdict, dataclass, field
+from pathlib import Path
+from time import perf_counter
+from typing import Any
+
+import numpy as np
+import yaml
+import matplotlib
+
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt
+import torch
+
+from rca_sim.baselines import (
+    BaselinePolicy,
+    ImmediateStopPolicy,
+    OneStepValueOfInformationPolicy,
+    RandomAcquisitionPolicy,
+    RandomIncludingStopPolicy,
+    ScriptedInvestigatorPolicy,
+)
+from rca_sim.config import load_simulator_config
+from rca_sim.model import SmallPolicyNetwork
+from rca_sim.observation import Observation
+from rca_sim.rollout import observations_to_tensors
+from rca_sim.environment import InvestigationEnv, load_exact_case
+from rca_sim.oracle import full_information_reference
+from rca_sim.world import HiddenIncidentWorld
+
+
+CaseSource = HiddenIncidentWorld | Mapping[str, object] | str | Path
+EnvironmentFactory = Callable[[], InvestigationEnv]
+
+DEFAULT_PROBE_BUDGETS = (1, 2, 4, 6)
+DEFAULT_ACTION_SEEDS = (9101, 9102, 9103, 9104, 9105)
+DEFAULT_SCRIPT_THRESHOLDS = (0.60, 0.75, 0.90, 0.99)
+
+
+@dataclass(slots=True)
+class CheckpointPolicy:
+    """Deterministic masked policy loaded from a training checkpoint."""
+
+    policy: SmallPolicyNetwork
+
+    @property
+    def name(self) -> str:
+        return "ppo"
+
+    @property
+    def action_seed(self) -> None:
+        return None
+
+    def reset(self) -> None:
+        pass
+
+    def select_action(self, observation: Observation) -> int:
+        self.policy.eval()
+        with torch.no_grad():
+            tensors = observations_to_tensors([observation])
+            return int(self.policy.act(tensors, deterministic=True).actions[0])
+
+
+@dataclass(frozen=True, slots=True)
+class EvaluationRow:
+    """One terminal episode result."""
+
+    method: str
+    case_id: str
+    action_seed: int | None
+    diagnosis_correct: bool
+    episode_return: float | None
+    credits_spent: int | None
+    probes_taken: int | None
+    predicted_service: int
+    predicted_fault: str
+    termination_reason: str
+    actions: tuple[int, ...]
+    planning_seconds: float = field(compare=False)
+    evidence_records: int
+
+
+@dataclass(frozen=True, slots=True)
+class AggregateRow:
+    """Aggregate for one method across cases and action seeds."""
+
+    method: str
+    episodes: int
+    cases: int
+    action_seeds: int
+    accuracy: float
+    mean_return: float | None
+    mean_credits_spent: float | None
+    mean_probes_taken: float | None
+    mean_planning_seconds: float
+    mean_evidence_records: float
+
+
+def evaluate_episode(
+    environment: InvestigationEnv,
+    case: CaseSource,
+    policy: BaselinePolicy,
+    *,
+    fallback_case_id: str,
+) -> EvaluationRow:
+    """Run one policy on one frozen incident until true termination."""
+    observation, reset_info = environment.reset(options={"case": case})
+    policy.reset()
+    actions: list[int] = []
+    terminal_info: dict[str, Any] | None = None
+    planning_seconds = 0.0
+
+    while not environment.terminated:
+        started = perf_counter()
+        action = policy.select_action(observation)
+        planning_seconds += perf_counter() - started
+        actions.append(action)
+        observation, _, terminated, truncated, info = environment.step(action)
+        if truncated:
+            raise RuntimeError("baseline evaluation does not allow truncation")
+        if terminated:
+            terminal_info = info
+
+    if terminal_info is None or terminal_info.get("diagnosis_correct") is None:
+        raise RuntimeError("episode terminated without a scored diagnosis")
+
+    case_id = str(reset_info.get("case_id", fallback_case_id))
+    return EvaluationRow(
+        method=policy.name,
+        case_id=case_id,
+        action_seed=policy.action_seed,
+        diagnosis_correct=bool(terminal_info["diagnosis_correct"]),
+        episode_return=float(terminal_info["episode_return"]),
+        credits_spent=int(terminal_info["credits_spent"]),
+        probes_taken=int(terminal_info["probes_taken"]),
+        predicted_service=int(terminal_info["predicted_service"]),
+        predicted_fault=str(terminal_info["predicted_fault"]),
+        termination_reason=str(terminal_info["termination_reason"]),
+        actions=tuple(actions),
+        planning_seconds=planning_seconds,
+        evidence_records=len(environment.evidence_records),
+    )
+
+
+def evaluate_full_information(
+    case: CaseSource,
+    *,
+    fallback_case_id: str,
+    default_n_services: int = 8,
+    default_edge_probability: float = 0.15,
+) -> EvaluationRow:
+    """Evaluate one case after revealing all frozen evidence records."""
+    world, loaded_case_id = load_exact_case(
+        case,
+        default_n_services=default_n_services,
+        default_edge_probability=default_edge_probability,
+    )
+    started = perf_counter()
+    reference = full_information_reference(world)
+    planning_seconds = perf_counter() - started
+    return EvaluationRow(
+        method="full_information",
+        case_id=str(loaded_case_id or fallback_case_id),
+        action_seed=None,
+        diagnosis_correct=reference.diagnosis_correct,
+        episode_return=None,
+        credits_spent=None,
+        probes_taken=None,
+        predicted_service=reference.predicted_service,
+        predicted_fault=reference.predicted_fault,
+        termination_reason="reference",
+        actions=(),
+        planning_seconds=planning_seconds,
+        evidence_records=reference.evidence_records,
+    )
+
+
+def _evaluate_voi_case(task: tuple[str, str, dict[str, int | float]]) -> EvaluationRow:
+    """Evaluate one VOI case in an independent worker process."""
+    case_path, fallback_case_id, environment_kwargs = task
+    environment = InvestigationEnv(**environment_kwargs)
+    try:
+        return evaluate_episode(
+            environment,
+            case_path,
+            OneStepValueOfInformationPolicy(environment),
+            fallback_case_id=fallback_case_id,
+        )
+    finally:
+        environment.close()
+
+
+def evaluate_voi_parallel(
+    cases: Sequence[Path],
+    *,
+    config_path: Path,
+    workers: int,
+) -> tuple[EvaluationRow, ...]:
+    """Evaluate deterministic VOI cases in stable order across processes."""
+    if workers < 1:
+        raise ValueError("workers must be positive")
+    config = load_simulator_config(config_path)
+    tasks = tuple(
+        (str(case), f"case_{index:04d}", config.environment_kwargs())
+        for index, case in enumerate(cases)
+    )
+    with concurrent.futures.ProcessPoolExecutor(max_workers=workers) as executor:
+        return tuple(executor.map(_evaluate_voi_case, tasks, chunksize=4))
+
+
+def evaluate_baselines(
+    cases: Iterable[CaseSource],
+    *,
+    probe_budgets: Sequence[int] = DEFAULT_PROBE_BUDGETS,
+    action_seeds: Sequence[int] = DEFAULT_ACTION_SEEDS,
+    script_thresholds: Sequence[float] = DEFAULT_SCRIPT_THRESHOLDS,
+    include_stop: bool = True,
+    include_random: bool = True,
+    include_random_smoke: bool = True,
+    include_script: bool = True,
+    include_voi1: bool = True,
+    include_full_information: bool = True,
+    environment_factory: EnvironmentFactory = InvestigationEnv,
+) -> tuple[EvaluationRow, ...]:
+    """Evaluate baseline variants while reusing every case across methods."""
+    frozen_cases = tuple(cases)
+    if not frozen_cases:
+        raise ValueError("cases cannot be empty")
+    budgets = _unique_nonnegative(probe_budgets, "probe_budgets", positive=True)
+    seeds = _unique_nonnegative(action_seeds, "action_seeds")
+    if (include_random or include_random_smoke) and not seeds:
+        raise ValueError("stochastic baselines require at least one action seed")
+
+    policy_factories: list[Callable[[InvestigationEnv], BaselinePolicy]] = []
+    if include_stop:
+        policy_factories.append(lambda environment: ImmediateStopPolicy())
+    if include_random:
+        policy_factories.extend(
+            lambda environment, budget=budget, seed=seed: RandomAcquisitionPolicy(
+                probe_budget=budget,
+                seed=seed,
+            )
+            for budget in budgets
+            for seed in seeds
+        )
+    if include_random_smoke:
+        policy_factories.extend(
+            lambda environment, seed=seed: RandomIncludingStopPolicy(seed=seed)
+            for seed in seeds
+        )
+    if include_script:
+        policy_factories.extend(
+            lambda environment, threshold=threshold: ScriptedInvestigatorPolicy(
+                confidence_threshold=threshold
+            )
+            for threshold in _unique_thresholds(script_thresholds)
+        )
+    if include_voi1:
+        policy_factories.append(OneStepValueOfInformationPolicy)
+    if not policy_factories and not include_full_information:
+        raise ValueError("at least one baseline method must be enabled")
+
+    rows: list[EvaluationRow] = []
+    for policy_factory in policy_factories:
+        environment = environment_factory()
+        policy = policy_factory(environment)
+        try:
+            for case_index, case in enumerate(frozen_cases):
+                rows.append(
+                    evaluate_episode(
+                        environment,
+                        case,
+                        policy,
+                        fallback_case_id=f"case_{case_index:04d}",
+                    )
+                )
+        finally:
+            environment.close()
+    if include_full_information:
+        environment = environment_factory()
+        try:
+            for case_index, case in enumerate(frozen_cases):
+                rows.append(
+                    evaluate_full_information(
+                        case,
+                        fallback_case_id=f"case_{case_index:04d}",
+                        default_n_services=environment.configured_n_services,
+                        default_edge_probability=environment.extra_edge_probability,
+                    )
+                )
+        finally:
+            environment.close()
+    return tuple(rows)
+
+
+def aggregate_results(rows: Iterable[EvaluationRow]) -> tuple[AggregateRow, ...]:
+    """Summarize episode rows by named method variant."""
+    grouped: dict[str, list[EvaluationRow]] = defaultdict(list)
+    for row in rows:
+        if not isinstance(row, EvaluationRow):
+            raise TypeError("rows must contain EvaluationRow values")
+        grouped[row.method].append(row)
+    if not grouped:
+        raise ValueError("rows cannot be empty")
+
+    summaries: list[AggregateRow] = []
+    for method in sorted(grouped):
+        method_rows = grouped[method]
+        summaries.append(
+            AggregateRow(
+                method=method,
+                episodes=len(method_rows),
+                cases=len({row.case_id for row in method_rows}),
+                action_seeds=len(
+                    {
+                        row.action_seed
+                        for row in method_rows
+                        if row.action_seed is not None
+                    }
+                ),
+                accuracy=float(np.mean([row.diagnosis_correct for row in method_rows])),
+                mean_return=_optional_mean(
+                    [row.episode_return for row in method_rows]
+                ),
+                mean_credits_spent=_optional_mean(
+                    [row.credits_spent for row in method_rows]
+                ),
+                mean_probes_taken=_optional_mean(
+                    [row.probes_taken for row in method_rows]
+                ),
+                mean_planning_seconds=float(
+                    np.mean([row.planning_seconds for row in method_rows])
+                ),
+                mean_evidence_records=float(
+                    np.mean([row.evidence_records for row in method_rows])
+                ),
+            )
+        )
+    return tuple(summaries)
+
+
+def _environment_factory_from_config(path: Path | None) -> EnvironmentFactory:
+    if path is None:
+        return InvestigationEnv
+    config = load_simulator_config(path)
+    return lambda: InvestigationEnv(**config.environment_kwargs())
+
+
+def _case_paths(path: Path) -> tuple[Path, ...]:
+    if path.is_file():
+        return (path,)
+    if not path.is_dir():
+        raise ValueError(f"case path does not exist: {path}")
+    cases = tuple(sorted(path.rglob("case_*.json")))
+    if not cases:
+        raise ValueError(f"case directory contains no JSON files: {path}")
+    return cases
+
+
+def _write_results(
+    output: Path,
+    rows: Sequence[EvaluationRow],
+    summaries: Sequence[AggregateRow],
+) -> None:
+    output.mkdir(parents=True, exist_ok=True)
+    with (output / "episodes.jsonl").open("w", encoding="utf-8") as handle:
+        for row in rows:
+            handle.write(json.dumps(asdict(row), sort_keys=True) + "\n")
+    (output / "summary.json").write_text(
+        json.dumps([asdict(summary) for summary in summaries], indent=2, sort_keys=True)
+        + "\n",
+        encoding="utf-8",
+    )
+    _write_baseline_table(output / "baseline_table.csv", summaries)
+    _write_accuracy_cost_plot(output / "accuracy_vs_credits.png", summaries)
+    _write_representative_rows(output / "representative_traces.json", rows)
+
+
+def _write_baseline_table(path: Path, summaries: Sequence[AggregateRow]) -> None:
+    fields = tuple(AggregateRow.__dataclass_fields__)
+    with path.open("w", encoding="utf-8", newline="") as handle:
+        writer = csv.DictWriter(handle, fieldnames=fields)
+        writer.writeheader()
+        writer.writerows(asdict(summary) for summary in summaries)
+
+
+def _write_accuracy_cost_plot(path: Path, summaries: Sequence[AggregateRow]) -> None:
+    feasible = [row for row in summaries if row.mean_credits_spent is not None]
+    figure, axis = plt.subplots(figsize=(9, 6))
+    for row in feasible:
+        axis.scatter(row.mean_credits_spent, row.accuracy, s=35)
+        axis.annotate(
+            row.method,
+            (row.mean_credits_spent, row.accuracy),
+            xytext=(4, 4),
+            textcoords="offset points",
+            fontsize=7,
+        )
+    axis.set_xlabel("Mean credits spent")
+    axis.set_ylabel("Diagnosis accuracy")
+    axis.set_ylim(0.0, 1.0)
+    axis.grid(alpha=0.25)
+    figure.tight_layout()
+    figure.savefig(path, dpi=160)
+    plt.close(figure)
+
+
+def _write_representative_rows(path: Path, rows: Sequence[EvaluationRow]) -> None:
+    grouped: dict[str, list[EvaluationRow]] = defaultdict(list)
+    for row in rows:
+        grouped[row.method].append(row)
+    selected: list[dict[str, Any]] = []
+    for method in sorted(grouped):
+        method_rows = grouped[method]
+        for outcome in (True, False):
+            match = next(
+                (row for row in method_rows if row.diagnosis_correct is outcome), None
+            )
+            if match is not None:
+                item = asdict(match)
+                item["selection"] = "correct" if outcome else "incorrect"
+                selected.append(item)
+    path.write_text(
+        json.dumps(selected, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+    )
+
+
+def _unique_nonnegative(
+    values: Sequence[int],
+    name: str,
+    *,
+    positive: bool = False,
+) -> tuple[int, ...]:
+    result: list[int] = []
+    for value in values:
+        if isinstance(value, bool) or not isinstance(value, int):
+            raise TypeError(f"{name} must contain integers")
+        if value < int(positive):
+            bound = "positive" if positive else "nonnegative"
+            raise ValueError(f"{name} must contain {bound} integers")
+        if value not in result:
+            result.append(value)
+    return tuple(result)
+
+
+def _unique_thresholds(values: Sequence[float]) -> tuple[float, ...]:
+    result: list[float] = []
+    for value in values:
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            raise TypeError("script_thresholds must contain real numbers")
+        threshold = float(value)
+        if not np.isfinite(threshold) or not 0.0 <= threshold <= 1.0:
+            raise ValueError("script_thresholds must be between 0 and 1")
+        if threshold not in result:
+            result.append(threshold)
+    if not result:
+        raise ValueError("script_thresholds cannot be empty")
+    return tuple(result)
+
+
+def _optional_mean(values: Sequence[float | int | None]) -> float | None:
+    present = [float(value) for value in values if value is not None]
+    return None if not present else float(np.mean(present))
+
+
+def _parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--config", type=Path)
+    parser.add_argument("--cases", type=Path, required=True)
+    parser.add_argument(
+        "--methods",
+        nargs="+",
+        choices=(
+            "stop",
+            "random",
+            "random_stop",
+            "script",
+            "voi1",
+            "full_information",
+        ),
+        default=(
+            "stop",
+            "random",
+            "random_stop",
+            "script",
+            "voi1",
+            "full_information",
+        ),
+    )
+    parser.add_argument(
+        "--probe-budgets", nargs="+", type=int, default=DEFAULT_PROBE_BUDGETS
+    )
+    parser.add_argument(
+        "--action-seeds", nargs="+", type=int, default=DEFAULT_ACTION_SEEDS
+    )
+    parser.add_argument(
+        "--script-thresholds",
+        nargs="+",
+        type=float,
+        default=DEFAULT_SCRIPT_THRESHOLDS,
+    )
+    parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--checkpoint", type=Path)
+    parser.add_argument("--workers", type=int, default=1)
+    return parser
+
+
+def main(argv: Sequence[str] | None = None) -> int:
+    args = _parser().parse_args(argv)
+    methods = set(args.methods)
+    case_paths = _case_paths(args.cases)
+    if methods == {"voi1"} and args.checkpoint is None and args.workers > 1:
+        if args.config is None:
+            raise ValueError("parallel VOI evaluation requires --config")
+        rows = list(
+            evaluate_voi_parallel(
+                case_paths, config_path=args.config, workers=args.workers
+            )
+        )
+    else:
+        rows = list(evaluate_baselines(
+        case_paths,
+        probe_budgets=args.probe_budgets,
+        action_seeds=args.action_seeds,
+        script_thresholds=args.script_thresholds,
+        include_stop="stop" in methods,
+        include_random="random" in methods,
+        include_random_smoke="random_stop" in methods,
+        include_script="script" in methods,
+        include_voi1="voi1" in methods,
+        include_full_information="full_information" in methods,
+        environment_factory=_environment_factory_from_config(args.config),
+        ))
+    if args.checkpoint is not None:
+        payload = torch.load(args.checkpoint, map_location="cpu", weights_only=False)
+        network = SmallPolicyNetwork()
+        network.load_state_dict(payload["model_state"])
+        environment = _environment_factory_from_config(args.config)()
+        policy = CheckpointPolicy(network)
+        try:
+            for case_index, case in enumerate(case_paths):
+                rows.append(
+                    evaluate_episode(
+                        environment,
+                        case,
+                        policy,
+                        fallback_case_id=f"case_{case_index:04d}",
+                    )
+                )
+        finally:
+            environment.close()
+    summaries = aggregate_results(rows)
+    _write_results(args.output, rows, summaries)
+    print(json.dumps([asdict(summary) for summary in summaries], indent=2))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

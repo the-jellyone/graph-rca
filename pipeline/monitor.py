@@ -12,6 +12,7 @@ import sys
 warnings.filterwarnings("ignore")
 
 from kg_builder import KGBuilder
+from graph_writer import writer_lease
 
 POLL = 30
 
@@ -46,11 +47,13 @@ def _render(services, anomalies, cycle):
     if anomalies:
         print(f"\n  ⚠  alert: {', '.join(anomalies)}")
         print(f"     run 'python pipeline/llm_chat.py' to investigate\n")
+    elif any(svc.get("status") != "healthy" for svc in services) or not services:
+        print("\n  health unknown, inspect missing telemetry\n")
     else:
-        print(f"\n  ✓  all services healthy\n")
+        print("\n  all observed services healthy\n")
 
 
-def run():
+def _run():
     kg    = KGBuilder()
     kg.build()
     cycle = 0
@@ -85,6 +88,11 @@ def run():
             kg.close()
         except Exception:
             pass
+
+
+def run():
+    with writer_lease():
+        _run()
 
 
 if __name__ == "__main__":

@@ -1,0 +1,17 @@
+[project]
+name = "rca-investigation-v3-neural"
+version = "0.1.0"
+requires-python = ">=3.12,<3.13"
+dependencies = ["rca-investigation", "torch==2.14.0+cpu", "numpy==2.5.3"]
+
+[dependency-groups]
+dev = ["pytest==9.1.1"]
+
+[tool.uv.sources]
+rca-investigation = { path = "../../..", editable = true }
+torch = { index = "pytorch-cpu" }
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true

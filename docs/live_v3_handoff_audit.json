@@ -1,0 +1,38 @@
+{
+  "frozen_source_and_artifacts_unchanged": true,
+  "bundle_hash": "a6eed9ed12bb663a9d7da86242bd8982f33651d9af47e5de00968ce1e1f8056e",
+  "bundle_directory": "runs/live_v3_export",
+  "bundle_bytes": 163094225,
+  "container_identities_verified": true,
+  "all_resources_running": true,
+  "proxy_delay_ms": 0,
+  "remaining_locks": [],
+  "remaining_graph_anomalies": 0,
+  "unit_and_focused_regression_tests": 58,
+  "adapter_hash_after_narration_timing_clarification": "100a67c78c2bfb23d2685c8d08603cbc182523a72c27c3bc2465ce2d5dd6b199",
+  "python": "3.12.13",
+  "terminal_cli_check": {
+    "policy": "voi",
+    "case": "catalogue_db_stop",
+    "diagnosis_correct": true,
+    "confidence": 0.7703845151618155,
+    "agent_repair": false,
+    "cleanup_confirmed": true,
+    "health_confirmed": true,
+    "receipt_sha256": "757456dd69131586228882597bf245f9c3bf00e5d566707b3980e0be40e2f8cb"
+  },
+  "gcp_rehearsed": false,
+  "training": false,
+  "reserved_incident_reads": false,
+  "narration_check": {
+    "mode": "groq",
+    "commentary_returned": true,
+    "payload_scope": "diagnosis prediction/confidence, status and repair/cleanup/health booleans only"
+  },
+  "docker_image_export": {
+    "directory": "runs/live_v3_images",
+    "images": 18,
+    "archive_bytes": 1320642560,
+    "archive_sha256": "82740ed7ad6cd52a77ddaabadcfae83d5bda7dcd9940be37c581fdbd1ea4379f"
+  }
+}
