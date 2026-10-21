@@ -7,14 +7,8 @@ from .backends.docker import compose_rows, resolve_containers
 
 
 class LabDriver:
-    def __init__(self, topology, root, runner=subprocess.run, project='rca-lab'):
-        # Keep the isolated lab as the default, but allow the operator to point
-        # the same identity-checked injector at their already-running Compose
-        # project. The project is still explicit at every Docker query and each
-        # container is revalidated by both Compose labels before intervention.
-        if not isinstance(project, str) or not project or not project.replace('-', '').replace('_', '').isalnum():
-            raise ValueError('invalid Compose project name')
-        self.topology, self.root, self.runner, self.project = topology, root, runner, project
+    def __init__(self, topology, root, runner=subprocess.run):
+        self.topology, self.root, self.runner = topology, root, runner
         self.docker = shutil.which('docker')
         if self.docker is None:
             raise RuntimeError('Docker unavailable')
@@ -28,8 +22,8 @@ class LabDriver:
         return result.stdout, receipt
 
     def resolve(self):
-        output, _ = self.command(['compose','-p',self.project,'ps','--all','--no-trunc','--format','json'])
-        self.ids = resolve_containers(compose_rows(output),self.topology.resources,self.project)
+        output, _ = self.command(['compose','-p','rca-lab','ps','--all','--no-trunc','--format','json'])
+        self.ids = resolve_containers(compose_rows(output),self.topology.resources)
         return dict(self.ids)
 
     def state(self, resource):
@@ -40,7 +34,7 @@ class LabDriver:
         if len(rows) != 1 or rows[0]['Id'] != self.ids[resource]:
             raise RuntimeError('container identity changed')
         labels = rows[0]['Config']['Labels']
-        if labels.get('com.docker.compose.project') != self.project or labels.get('com.docker.compose.service') != resource:
+        if labels.get('com.docker.compose.project') != 'rca-lab' or labels.get('com.docker.compose.service') != resource:
             raise RuntimeError('container registry mismatch')
         return {'resource':resource,'container_id':self.ids[resource],'state':rows[0]['State']['Status'],
                 'sample_time':datetime.now(timezone.utc).isoformat()}
@@ -53,7 +47,7 @@ class LabDriver:
             raise RuntimeError('lab resource set changed')
         for resource, identifier in self.ids.items():
             labels = by_id[identifier]['Config']['Labels']
-            if labels.get('com.docker.compose.project') != self.project or labels.get('com.docker.compose.service') != resource:
+            if labels.get('com.docker.compose.project') != 'rca-lab' or labels.get('com.docker.compose.service') != resource:
                 raise RuntimeError('container registry mismatch')
         return {r:by_id[i]['State']['Status'] for r,i in self.ids.items()}
 

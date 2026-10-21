@@ -42,7 +42,7 @@ GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.5-flash-lite")
 POLICY_BUNDLE = Path(os.getenv("GRAPH_RCA_POLICY_BUNDLE", str(PROJECT_ROOT / "runs/live_v3_export")))
 LIVE_REGISTRY = Path(os.getenv("GRAPH_RCA_LIVE_REGISTRY", str(PROJECT_ROOT / "runs/live_v3/deployment.json")))
 LIVE_OUTPUT = Path(os.getenv("GRAPH_RCA_LIVE_OUTPUT", str(PROJECT_ROOT / "runs/live_v3")))
-DOCKER_COMPOSE_PROJECT = os.getenv("GRAPH_RCA_COMPOSE_PROJECT", "rca-project")
+DOCKER_COMPOSE_PROJECT = os.getenv("GRAPH_RCA_COMPOSE_PROJECT", "rca-lab")
 DATABASE_PATH = BASE_DIR / "data" / "console.sqlite3"
 POLICY_NAMES = ("dqn", "dp", "voi", "expected-sarsa", "two-step-sarsa", "expected-sarsa-hybrid", "two-step-sarsa-hybrid", "random-valid", "expanded-rule")
 
@@ -252,9 +252,8 @@ def lab_driver():
     from rca_investigation.topology import sockshop_topology
     from rca_investigation.faults import LabDriver
     from rca_investigation.faults_v2 import AdaptiveLabDriver
-    # The basic fault injector targets the operator's existing local stack.
-    # Advanced V2/V3 helpers retain their isolated rca-lab assumptions.
-    return LabDriver(sockshop_topology(), PROJECT_ROOT, project=DOCKER_COMPOSE_PROJECT), AdaptiveLabDriver(sockshop_topology(), PROJECT_ROOT)
+    # The frozen V3 lab and its bounded controller both use the isolated rca-lab project.
+    return LabDriver(sockshop_topology(), PROJECT_ROOT), AdaptiveLabDriver(sockshop_topology(), PROJECT_ROOT)
 
 _lab_snapshot={"available":False,"states":{},"error":f"The configured Docker project {DOCKER_COMPOSE_PROJECT} has not been checked yet."}
 
